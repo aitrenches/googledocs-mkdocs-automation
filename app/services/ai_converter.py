@@ -1,5 +1,5 @@
 from typing import Dict, Optional
-from openai import AzureOpenAI
+from openai import OpenAI
 from dotenv import load_dotenv
 import os
 import json
@@ -14,23 +14,19 @@ load_dotenv()
 
 class AIConverter:
     def __init__(self):
-        """Initialize the AI converter with Azure OpenAI credentials"""
-        self.api_key = os.getenv('AZURE_OPENAI_KEY')
-        self.azure_endpoint = os.getenv('AZURE_OPENAI_ENDPOINT')
-        self.deployment_name = os.getenv('AZURE_OPENAI_DEPLOYMENT_NAME')
+        """Initialize the AI converter with OpenAI credentials"""
+        self.api_key = os.getenv('OPENAI_API_KEY')
         
-        if not all([self.api_key, self.azure_endpoint, self.deployment_name]):
-            raise ValueError("Azure OpenAI credentials not found in environment variables")
+        if not self.api_key:
+            raise ValueError("OpenAI API key not found in environment variables")
         
-        self.client = AzureOpenAI(
-            api_key=self.api_key,
-            api_version="2024-02-15-preview",
-            azure_endpoint=self.azure_endpoint
+        self.client = OpenAI(
+            api_key=self.api_key
         )
 
     async def convert_to_markdown(self, doc_content: Dict) -> str:
         """
-        Convert Google Docs content to Markdown using Azure OpenAI's model
+        Convert Google Docs content to Markdown using OpenAI's GPT-4o-mini model
         
         Args:
             doc_content (Dict): The Google Doc content dictionary
@@ -58,7 +54,7 @@ class AIConverter:
 
             user_prompt = f"Convert this Google Docs content to Markdown:\n\n{content}"
 
-            # Make API call to Azure OpenAI
+            # Make API call to OpenAI
             response = await self._call_openai(system_prompt, user_prompt)
             
             return response
@@ -122,7 +118,7 @@ class AIConverter:
 
     async def _call_openai(self, system_prompt: str, user_prompt: str) -> str:
         """
-        Make an API call to Azure OpenAI
+        Make an API call to OpenAI
         
         Args:
             system_prompt (str): The system instruction
@@ -133,7 +129,7 @@ class AIConverter:
         """
         try:
             response = self.client.chat.completions.create(
-                model=self.deployment_name,  # Use the deployment name instead of model name
+                model="gpt-4o-mini",  # Using gpt-4o-mini as requested
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
@@ -145,5 +141,5 @@ class AIConverter:
             return response.choices[0].message.content.strip()
 
         except Exception as e:
-            logger.error(f"Error in Azure OpenAI API call: {str(e)}")
+            logger.error(f"Error in OpenAI API call: {str(e)}")
             raise

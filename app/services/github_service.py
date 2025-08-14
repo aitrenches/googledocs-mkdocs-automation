@@ -100,7 +100,7 @@ class GitHubService:
 
     async def update_mkdocs_nav(self, new_file_path: str, title: str, branch: str = "main") -> str:
         """
-        Update mkdocs.yml navigation with new file
+        Update mkdocs.yml navigation with new file, avoiding duplicates
         """
         try:
             # Get current mkdocs.yml
@@ -110,36 +110,61 @@ class GitHubService:
             # Remove 'docs/' from the file path for nav
             nav_path = new_file_path.replace('docs/', '')
             
-            # Simple nav update - ensure proper formatting
-            if 'nav:' in current_config:
-                nav_lines = current_config.split('\n')
-                new_lines = []
-                nav_added = False
-                
-                for line in nav_lines:
-                    if line.strip().startswith('nav:'):
-                        new_lines.append(line)
-                        new_lines.append(f"  - {title}: {nav_path}")
-                        nav_added = True
-                    elif not nav_added and line.strip().startswith('- Home:'):
-                        new_lines.append(f"  - {title}: {nav_path}")
-                        new_lines.append(line)
-                        nav_added = True
-                    else:
-                        new_lines.append(line)
-                
-                new_config = '\n'.join(new_lines)
-                
-                # Update mkdocs.yml
-                self.repo.update_file(
-                    "mkdocs.yml",
-                    f"Update navigation: add {title}",
-                    new_config,
-                    config_file.sha,
-                    branch=branch
-                )
-                
+            # Check if the file is already in navigation
+            if f"- {title}: {nav_path}" in current_config:
+                logger.info(f"Navigation entry for {title} already exists, skipping update")
+                return f"https://github.com/{self.repo_name}/blob/{branch}/mkdocs.yml"
+            
+            # Parse the current navigation structure
+            lines = current_config.split('\n')
+            new_lines = []
+            nav_section_found = False
+            nav_updated = False
+            
+            for line in lines:
+                if line.strip() == 'nav:':
+                    nav_section_found = True
+                    new_lines.append(line)
+                elif nav_section_found and line.strip().startswith('-') and not nav_updated:
+                    # Insert new navigation item at the beginning of nav section
+                    new_lines.append(f"  - {title}: {nav_path}")
+                    new_lines.append(line)
+                    nav_updated = True
+                elif nav_section_found and line.strip() == '' and not nav_updated:
+                    # Handle empty lines in nav section
+                    new_lines.append(f"  - {title}: {nav_path}")
+                    new_lines.append(line)
+                    nav_updated = True
+                else:
+                    new_lines.append(line)
+            
+            # If nav section was found but no update was made, add at the end
+            if nav_section_found and not nav_updated:
+                # Find the end of nav section (next non-indented line)
+                for i, line in enumerate(new_lines):
+                    if line.strip() == 'nav:':
+                        # Find the last nav item
+                        j = i + 1
+                        while j < len(new_lines) and (new_lines[j].strip() == '' or new_lines[j].startswith('  ')):
+                            j += 1
+                        # Insert before the first non-nav line
+                        new_lines.insert(j, f"  - {title}: {nav_path}")
+                        break
+            
+            new_config = '\n'.join(new_lines)
+            
+            # Update mkdocs.yml
+            self.repo.update_file(
+                "mkdocs.yml",
+                f"Update navigation: add {title}",
+                new_config,
+                config_file.sha,
+                branch=branch
+            )
+            
+            logger.info(f"Successfully updated navigation with {title}: {nav_path}")
             return f"https://github.com/{self.repo_name}/blob/{branch}/mkdocs.yml"
+            
         except Exception as e:
             logger.error(f"Error updating mkdocs.yml: {str(e)}")
             raise
@@ -160,4 +185,37 @@ class GitHubService:
             return branch_name
         except Exception as e:
             logger.error(f"Error creating branch: {str(e)}")
+            raise
+
+    async def remove_from_mkdocs_nav(self, title: str, branch: str = "main") -> str:
+        """
+        Remove a page from mkdocs.yml navigation
+        """
+        try:
+            config_file = self.repo.get_contents("mkdocs.yml", ref=branch)
+            current_config = config_file.decoded_content.decode()
+            
+            lines = current_config.split('\n')
+            new_lines = []
+            
+            for line in lines:
+                if not line.strip().startswith(f"- {title}:"):
+                    new_lines.append(line)
+            
+            new_config = '\n'.join(new_lines)
+            
+            # Update mkdocs.yml
+            self.repo.update_file(
+                "mkdocs.yml",
+                f"Remove navigation: {title}",
+                new_config,
+                config_file.sha,
+                branch=branch
+            )
+            
+            logger.info(f"Successfully removed {title} from navigation")
+            return f"https://github.com/{self.repo_name}/blob/{branch}/mkdocs.yml"
+            
+        except Exception as e:
+            logger.error(f"Error removing from mkdocs.yml: {str(e)}")
             raise
