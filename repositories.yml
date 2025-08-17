@@ -1,0 +1,56 @@
+# Repository Configuration File
+# This file defines the repositories that the system will manage
+
+repositories:
+  # Main documentation repository
+  - name: "main-docs"
+    url: "https://github.com/your-org/main-docs"
+    branch: "main"
+    mkdocs_config: "mkdocs.yml"
+    deployment: "github-pages"
+    docs_dir: "docs"
+    site_dir: "site"
+  
+  # API documentation repository
+  - name: "api-docs"
+    url: "https://github.com/your-org/api-docs"
+    branch: "main"
+    mkdocs_config: "mkdocs.yml"
+    deployment: "netlify"
+    docs_dir: "docs"
+    site_dir: "site"
+  
+  # User guides repository
+  - name: "user-guides"
+    url: "https://github.com/your-org/user-guides"
+    branch: "main"
+    mkdocs_config: "mkdocs.yml"
+    deployment: "vercel"
+    docs_dir: "docs"
+    site_dir: "site"
+  
+  # Project documentation repository
+  - name: "project-docs"
+    url: "https://github.com/your-org/project-docs"
+    branch: "main"
+    mkdocs_config: "mkdocs.yml"
+    deployment: "github-pages"
+    docs_dir: "docs"
+    site_dir: "site"
+
+# Template configuration
+default_template: "standard_docs"
+auto_detect_template: true
+
+# Processing options
+max_file_size: 10485760  # 10MB in bytes
+supported_formats:
+  - ".md"
+  - ".txt"
+  - ".html"
+
+# Notification settings
+notifications:
+  email_enabled: false
+  webhook_enabled: true
+  webhook_url: "https://your-webhook-url.com/notify"

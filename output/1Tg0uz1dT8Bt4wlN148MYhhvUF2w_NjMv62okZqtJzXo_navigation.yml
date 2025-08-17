@@ -1,0 +1,8 @@
+nav:
+  - Home: index.md
+  - About: about/index.md
+  - Team: team/index.md
+  - Operations: operations/index.md
+  - Tools: tools/index.md
+  - FAQ: faq.md
+  - Welcome to the Review Circle: welcome-to-the-review-circle.md

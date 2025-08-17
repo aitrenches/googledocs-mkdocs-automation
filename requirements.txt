@@ -9,3 +9,5 @@ openai>=1.0.0
 pygithub
 pydantic
 pydantic-settings
+click
+pyyaml
