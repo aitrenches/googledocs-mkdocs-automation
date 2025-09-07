@@ -143,3 +143,27 @@ class AIConverter:
         except Exception as e:
             logger.error(f"Error in OpenAI API call: {str(e)}")
             raise
+
+    async def check_service(self):
+        """Check if AI converter service is working"""
+        try:
+            # Test with a simple conversion to verify the service works
+            test_content = "Test content for service check"
+            system_prompt = "Convert this to markdown:"
+            user_prompt = test_content
+            
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.3,
+                max_tokens=100
+            )
+            
+            # If we get a response, the service is working
+            return bool(response.choices[0].message.content)
+        except Exception as e:
+            logger.error(f"AI converter service check failed: {str(e)}")
+            return False

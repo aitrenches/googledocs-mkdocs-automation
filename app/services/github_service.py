@@ -187,6 +187,16 @@ class GitHubService:
             logger.error(f"Error creating branch: {str(e)}")
             raise
 
+    async def check_service(self):
+        """Check if GitHub service is working"""
+        try:
+            # Try to get repository information to verify service is working
+            repo_info = self.repo.name
+            return bool(repo_info)
+        except Exception as e:
+            logger.error(f"GitHub service check failed: {str(e)}")
+            return False
+
     async def remove_from_mkdocs_nav(self, title: str, branch: str = "main") -> str:
         """
         Remove a page from mkdocs.yml navigation
